@@ -1,0 +1,62 @@
+# 【随机重加权消融】在保持训练流程不变的前提下，使用随机生成的样本权重替代 SSR 的优化权重。
+run_name: 4datasets_clip04_CDiTXL_temmeDWR_random_reweight
+
+from_checkpoint: "/DATA/DATANAS2/xiaoyj25/projects/nwm/logs/nwm_cdit_xl/checkpoints/0100000.pth.tar"
+
+lr: 2e-6
+results_dir: logs
+train: True
+batch_size: 32
+num_workers: 12
+model: CDiT-XL/2
+
+normalize: True
+grad_clip_val: 10.0
+context_size: 4
+
+distance:
+  min_dist_cat: -64
+  max_dist_cat: 64
+
+len_traj_pred: 64
+
+image_size: 224
+datasets:
+  recon:
+    data_folder: data/recon
+    train: data_splits/recon/train/
+    test: data_splits/recon/test/
+    goals_per_obs: 4
+  tartan_drive:
+    data_folder: data/tartan_drive
+    train: my_data_splits/tartan_drive/train/
+    test: my_data_splits/tartan_drive/test/
+    goals_per_obs: 4
+  sacson:
+    data_folder: data/sacson
+    train: my_data_splits/sacson/train
+    test: my_data_splits/sacson/test
+    goals_per_obs: 4
+  scand:
+    data_folder: data/scand
+    train: my_data_splits/scand/train
+    test: my_data_splits/scand/test
+    goals_per_obs: 4
+
+reweight:
+  enable: True
+  ablation_mode: random
+  use_spacetime: False
+  pool_type: raw
+  start_steps: 0
+  time_scale: 1.0
+  memory_mode: random
+  bank_size: 0
+  dwr_lr: 0.01
+  dwr_steps: 15
+  clip_min: 0.6
+  clip_max: 1.4
+  alpha: 1.0
+  group_by_traj: False
+  debug_print_freq: 10000
+  

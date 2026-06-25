@@ -1,0 +1,45 @@
+# config/nwm_cdit_xl_finetune_eval.yaml
+
+# 1. 【修改】必须与你微调时的 run_name 一致
+# 这样代码才能拼接出正确的文件夹路径：logs/nwm_cdit_xl_finetune_reweight
+run_name: nwm_cdit_xl_finetune_reweight_2epoch
+
+
+# 2. 【修改】指定结果的根目录 (建议写绝对路径，防止出错)
+#results_dir: /villa/xiaoyj25/nwm/logs
+
+results_dir: /DATA/DATANAS2/xiaoyj25/projects/nwm/logs
+
+train: False
+batch_size: 64
+num_workers: 12
+model: CDiT-XL/2
+lr: 8e-5
+
+normalize: True
+grad_clip_val: 10.0
+
+# 3. 【核心警告】必须与微调训练时的设置一致！
+# 你在 fine-tune 时 yaml 里写的是 context_size: 2，这里必须也是 2
+context_size: 4
+
+distance:
+  min_dist_cat: -64
+  max_dist_cat: 64
+
+# 推理预测长度（保持默认即可，或者根据显存调整）
+len_traj_pred: 64
+
+image_size: 224
+datasets:
+  recon:
+    data_folder: data/recon
+    train: data_splits/recon/train/
+    test: data_splits/recon/test/
+    goals_per_obs: 4
+
+eval_datasets:
+  recon:
+    data_folder: data/recon
+    test: data_splits/recon/test/
+    goals_per_obs: 4

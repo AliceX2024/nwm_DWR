@@ -13,6 +13,8 @@ import torch.nn as nn
 import numpy as np
 import math
 from timm.models.vision_transformer import PatchEmbed, Attention, Mlp
+from torch.utils.checkpoint import checkpoint
+
 
 
 def modulate(x, shift, scale):
@@ -161,6 +163,8 @@ class CDiT(nn.Module):
         self.final_layer = FinalLayer(hidden_size, patch_size, self.out_channels)
         self.time_embedder = TimestepEmbedder(hidden_size)
         self.initialize_weights()
+        self.use_checkpoint = False
+
 
     def initialize_weights(self):
         # Initialize transformer layers:
@@ -239,7 +243,13 @@ class CDiT(nn.Module):
         c = t + time_emb + y # if training on unlabeled data, dont add y.
 
         for block in self.blocks:
-            x = block(x, c, x_cond)
+            if self.use_checkpoint and self.training:
+                x = checkpoint(block, x, c, x_cond)
+            else:
+                x = block(x, c, x_cond)
+
+        # for block in self.blocks:
+        #     x = block(x, c, x_cond)
         x = self.final_layer(x, c)
         x = self.unpatchify(x)
         return x

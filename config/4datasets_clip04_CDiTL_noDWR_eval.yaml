@@ -1,0 +1,92 @@
+# Planning Evaluation Config for ab_clip04_noDWR
+# 基于 ab_clip04_temDWR_eval.yaml 格式
+
+# 1. 【修改】必须与你微调时的 run_name 一致
+#run_name: nwm_cdit_xl_finetune_reweight_2epoch_2e6
+run_name: 4datasets_clip04_CDiTL_noDWR
+
+# 2. 【修改】指定结果的根目录
+results_dir: /DATA/DATANAS2/xiaoyj25/projects/nwm/logs
+
+# 模型配置
+train: False
+batch_size: 64
+num_workers: 12
+model: CDiT-L/2
+lr: 8e-5
+
+normalize: True
+grad_clip_val: 10.0
+
+# 3. 【核心】必须与微调训练时的设置一致
+context_size: 4
+
+distance:
+  min_dist_cat: -64
+  max_dist_cat: 64
+
+# 推理预测长度
+len_traj_pred: 64
+
+image_size: 224
+
+# ========== Planning 评估专用参数 ==========
+# trajectory_eval 用于 planning 评估的时间步和距离参数
+trajectory_eval_distance:
+  min_dist_cat: 8
+  max_dist_cat: 8
+trajectory_eval_len_traj_pred: 8
+trajectory_eval_context_size: 4
+traj_stride: 16
+
+# eval 相关参数（用于 isolated_nwm_infer.py 的 time/rollout 评估）
+eval_distance:
+  eval_min_dist_cat: -64
+  eval_max_dist_cat: 64
+eval_len_traj_pred: 64
+eval_context_size: 4
+
+# 数据集配置
+datasets:
+  recon:
+    data_folder: data/recon
+    train: data_splits/recon/train/
+    test: data_splits/recon/test/
+    goals_per_obs: 4
+  tartan_drive:
+    data_folder: data/tartan_drive
+    train: my_data_splits/tartan_drive/train/
+    test: my_data_splits/tartan_drive/test/
+    goals_per_obs: 4
+  sacson:
+    data_folder: data/sacson
+    train: my_data_splits/sacson/train
+    test: my_data_splits/sacson/test
+    goals_per_obs: 4
+  scand:
+    data_folder: data/scand
+    train: my_data_splits/scand/train
+    test: my_data_splits/scand/test
+    goals_per_obs: 4
+
+eval_datasets:
+  recon:
+    data_folder: data/recon
+    test: data_splits/recon/test/
+    goals_per_obs: 4
+  go_stanford:
+    data_folder: data/go_stanford
+    test: data_splits/go_stanford/test/
+    goals_per_obs: 4
+  tartan_drive:
+    data_folder: data/tartan_drive
+    test: my_data_splits/tartan_drive/test/
+    goals_per_obs: 4
+  sacson:
+    data_folder: data/sacson
+    test: my_data_splits/sacson/test
+    goals_per_obs: 4
+  scand:
+    data_folder: data/scand
+    test: my_data_splits/scand/test
+    goals_per_obs: 4

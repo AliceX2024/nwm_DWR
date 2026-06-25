@@ -61,6 +61,10 @@ def init_distributed(port=37124, rank_and_world_size=(None, None)):
     os.environ['MASTER_PORT'] = os.environ.get('MASTER_PORT', str(port))
     print("Using port", os.environ['MASTER_PORT'])
 
+     # === [关键修复] 设置 NCCL 超时时间 ===
+    os.environ.setdefault('NCCL_TIMEOUT', '1200')  # 20分钟
+    
+
     if "RANK" in os.environ and "WORLD_SIZE" in os.environ:
         try:
             rank = int(os.environ["RANK"])
@@ -89,13 +93,34 @@ def init_distributed(port=37124, rank_and_world_size=(None, None)):
 
     torch.cuda.set_device(gpu)
 
-    torch.distributed.init_process_group(
-        backend='nccl',
-        world_size=world_size,
-        rank=rank,
-        init_method=dist_url
-    )
-
+    # torch.distributed.init_process_group(
+    #     backend='nccl',
+    #     world_size=world_size,
+    #     rank=rank,
+    #     init_method=dist_url
+    # )
+    # === [关键修复] 在 init_process_group 中添加 timeout ===
+    from datetime import timedelta
+    timeout = timedelta(seconds=1200)  # 20分钟
+    # Prefer explicitly specifying device_id to avoid hangs when rank->GPU mapping is heterogeneous.
+    try:
+        torch.distributed.init_process_group(
+            backend='nccl',
+            world_size=world_size,
+            rank=rank,
+            init_method=dist_url,
+            timeout=timeout,  # 添加超时参数
+            device_id=gpu,
+        )
+    except TypeError:
+        torch.distributed.init_process_group(
+            backend='nccl',
+            world_size=world_size,
+            rank=rank,
+            init_method=dist_url,
+            timeout=timeout,  # 添加超时参数
+        )
+    
     # setup_for_distributed(rank == 0)
     return world_size, rank, gpu, True
 

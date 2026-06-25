@@ -1,10 +1,65 @@
-__pycache__
-results
-diffusion/__pycache__
-logs
-.vscode
-.ipynb_checkpoints
-models
-nwm/data
-data_splits/**/dataset*.pkl
-data
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Editors and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs and temporary files
+*.log
+*.out
+*.err
+*.tmp
+tmp/
+temp/
+
+# Generated experiment artifacts
+logs/
+log_analysis/
+results/
+results_finetune_latest/
+eval_results/
+models/
+data/
+my_data_splits/
+data_splits/
+pymp-*/
+torchelastic_*/
+torchinductor_*/
+
+# Downloaded or generated binaries
+*.npz
+*.npy
+*.pkl
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ckpt
+*.pt
+*.pth
+
+# Local notebooks and caches
+.cache/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Keep source and configs tracked by default; add new project outputs here if needed.
+wandb

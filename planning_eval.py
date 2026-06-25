@@ -103,7 +103,15 @@ def plot_batch_final(init_imgs, pred_imgs, goal_imgs, idxs, losses, save_path="f
 def get_dataset_eval(config, dataset_name, predefined_index=True):
     data_config = config["eval_datasets"][dataset_name]
     if predefined_index:
-        predefined_index = f"data_splits/{dataset_name}/test/navigation_eval.pkl"
+        # Use the test path from config instead of hardcoded path
+        test_folder = data_config["test"].rstrip('/')
+        pkl_path = f"{test_folder}/navigation_eval.pkl"
+        # Check if the pkl file exists, if not, rebuild it
+        if os.path.exists(pkl_path):
+            predefined_index = pkl_path
+        else:
+            print(f"****** PKL file not found: {pkl_path}, will rebuild index... ******")
+            predefined_index = None
     else:
         predefined_index = None
 
@@ -194,7 +202,23 @@ class WM_Planning_Evaluator:
         model.to(self.device)
         self.model = torch.compile(model)
         self.diffusion = create_diffusion(str(250))
-        self.vae = AutoencoderKL.from_pretrained(f"stabilityai/sd-vae-ft-ema").to(device)
+        
+        # Load VAE with fallback to HF mirror
+        vae_model_name = os.getenv("VAE_MODEL_PATH", "stabilityai/sd-vae-ft-ema")
+        try:
+            self.vae = AutoencoderKL.from_pretrained(vae_model_name, local_files_only=True).to(self.device)
+        except Exception as e:
+            if "local_files_only" in str(e) or "not found" in str(e).lower():
+                print(f"Local VAE model not found, trying to download from Hugging Face mirror...")
+                try:
+                    os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
+                    self.vae = AutoencoderKL.from_pretrained(vae_model_name).to(self.device)
+                except Exception as e2:
+                    print(f"Failed to download VAE model: {e2}")
+                    raise
+            else:
+                raise
+                
         self.model = torch.nn.parallel.DistributedDataParallel(self.model, device_ids=[self.device], find_unused_parameters=False)
         self.model_without_ddp = self.model.module
          

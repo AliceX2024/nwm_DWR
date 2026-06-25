@@ -1,0 +1,63 @@
+# NWM 从头训练配置文件 (仅用recon数据集)
+# 硬件: 2 x 80GB A100
+run_name: nwm_recon_scratch_2gpu_batch64
+
+# 训练设置
+results_dir: logs
+train: True
+batch_size: 64
+num_workers: 12
+model: CDiT-XL/2
+
+# 学习率 - 从头训练可使用较高的学习率
+lr: 8e-5
+
+# 归一化和梯度裁剪
+normalize: True
+grad_clip_val: 10.0
+context_size: 4
+
+# 距离范围
+distance:
+  min_dist_cat: -64
+  max_dist_cat: 64
+
+# 轨迹预测长度
+len_traj_pred: 64
+
+# 图像尺寸
+image_size: 224
+
+# 仅使用recon数据集
+datasets:
+  recon:
+    data_folder: data/recon
+    train: data_splits/recon/train/
+    test: data_splits/recon/test/
+    goals_per_obs: 4
+
+# 注意: 如果需要梯度累积，取消下面注释
+# gradient_accumulation_steps: 8
+
+# === Reweight 配置 ===
+reweight:
+  enable: True
+  use_spacetime: True
+  pool_type: adaptive_2x2   # 池化方式: 'avg', 'adaptive_2x2', 'raw'
+  start_steps: 0            # Warmup步数，0表示立即启用
+  time_scale: 2.0           # 时间特征缩放倍数
+  memory_mode: diversity    # 记忆库模式: 'random', 'fifo', 'diversity'
+  bank_size: 2048           # 记忆库大小
+
+  # DWR 算法参数
+  dwr_lr: 0.01           # DWR 内部学习率
+  dwr_steps: 15             # DWR 迭代步数
+
+  # 权重裁剪
+  clip_min: 0.6              # 权重下限
+  clip_max: 1.4              # 权重上限
+  alpha: 1.0                 # 平滑系数 (1.0=完全使用DWR权重)
+
+  # 轨迹相关
+  group_by_traj: False       # 是否强制同轨迹权重相同
+  debug_print_freq: 200      # 调试打印频率

@@ -74,6 +74,22 @@ def get_loss_fn(loss_fn_type, secs, device):
     return loss_fn
 
 
+def compute_psnr(img1, img2):
+    """Compute PSNR between two images (torch tensors in [0, 1] range).
+    
+    Args:
+        img1: First image tensor
+        img2: Second image tensor
+    
+    Returns:
+        PSNR value in dB (higher is better)
+    """
+    mse = torch.mean((img1 - img2) ** 2)
+    if mse == 0:
+        return float('inf')
+    return 20 * torch.log10(1.0 / torch.sqrt(mse))
+
+
 def evaluate(args, dataset_name, eval_type, metric_logger, loss_fns, gt_dir, exp_dir, secs, rollout_fps):
     lpips_loss_fn, dreamsim_loss_fn, fid_loss_fn = loss_fns
     
@@ -124,6 +140,10 @@ def evaluate(args, dataset_name, eval_type, metric_logger, loss_fns, gt_dir, exp
             
             sec_gt_batch = torch.cat(gt_batch[sec], dim=0)
             sec_exp_batch = torch.cat(exp_batch[sec], dim=0)
+            
+            # Compute PSNR for each image in batch and average
+            psnr_dists = torch.stack([compute_psnr(gt, exp) for gt, exp in zip(sec_gt_batch, sec_exp_batch)])
+            metric_logger.meters[f'{dataset_name}_{eval_name}_psnr_{sec}s'].update(psnr_dists.mean().item(), n=1)
             
             fid_loss_fn[sec].update(images=sec_gt_batch, is_real=True)
             fid_loss_fn[sec].update(images=sec_exp_batch, is_real=False)

@@ -1,0 +1,70 @@
+# 【修改 1】更改实验名称
+# 必须修改！否则代码会检测到原文件夹下有 latest.pth.tar，从而强制断点续训，忽略你的 from_checkpoint 设置
+run_name: ab_clip02_temmeDWR
+
+# 【修改 2】指定预训练权重路径
+#from_checkpoint: "/villa/xiaoyj25/nwm/logs/nwm_cdit_xl/checkpoints/0100000.pth.tar"
+from_checkpoint: "/DATA/DATANAS2/xiaoyj25/projects/nwm/logs/nwm_cdit_xl/checkpoints/0100000.pth.tar"
+#/DATA/DATANAS2/xiaoyj25/projects/nwm/logs/nwm_cdit_xl/checkpoints/0100000.pth.tar
+
+# 【修改 3】降低学习率
+# 微调时建议降低 5-10 倍，防止破坏预训练特征。原值 8e-5，这里建议改为 8e-6 到 1.6e-5
+# 2e-6 可能过小，建议使用 8e-6（原模型的1/10）或 1.6e-5（原模型的1/5）
+lr: 2e-6
+
+# --- 以下内容保持与你原配置一致 ---
+results_dir: logs
+train: True
+batch_size: 32
+num_workers: 12
+model: CDiT-XL/2
+
+normalize: True
+grad_clip_val: 10.0
+context_size: 4
+
+# === [可选] 梯度累积步数 ===
+# 默认值为 16，有效 batch = batch_size * 4卡 * gradient_accumulation_steps
+# 当前：4 * 4 * 16 = 256（约为原模型的1/4，合理）
+# 当前配置：batch_size=4，4 卡，gradient_accumulation=16，有效 batch=256，lr=2e-6，2 个 epoch（约 2740 步）
+# 原模型：batch_size=16，4 卡，gradient_accumulation=16，有效 batch=1024，lr=8e-5，100,000 步
+# 如果想更接近原模型的有效batch（1024），可以设置为 32：4 * 4 * 32 = 512
+# gradient_accumulation_steps: 16
+
+distance:
+  min_dist_cat: -64
+  max_dist_cat: 64
+
+len_traj_pred: 64
+
+image_size: 224
+datasets:
+  recon:
+    data_folder: data/recon
+    train: data_splits/recon/train/
+    test: data_splits/recon/test/
+    goals_per_obs: 4
+
+# === [新增] Reweighting 专用配置 ===
+reweight:
+  enable: True
+  use_spacetime: True
+  pool_type: adaptive_2x2   # 池化方式: 'avg'(4维), 'adaptive_2x2'(16维), 'raw'(3136维)
+  start_steps: 0         # Warmup步数
+  time_scale: 4.0   # 时间特征缩放倍数: 4.0(放大), 1.0(不放大)
+  memory_mode: 'diversity'  # 新增选项: 'random', 'fifo', 'diversity'
+  bank_size: 2048  
+
+  
+  # DWR 算法内部参数
+  dwr_lr: 0.01          # DWR 内部学习率
+  dwr_steps: 15           # 迭代步数
+  
+  # 权重控制
+  clip_min: 0.8           # 权重下限
+  clip_max: 1.2           # 权重上限
+  alpha: 1.0              # 平滑系数
+  
+  # 轨迹相关
+  group_by_traj: False    # 是否强制同轨迹权重相同
+  debug_print_freq: 200    # 调试打印频率

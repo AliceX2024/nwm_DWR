@@ -1,0 +1,30 @@
+# config/nwm_cdit_xl_eval_go_stanford.yaml
+# 用于在 go_stanford 数据集上评估模型
+
+run_name: nwm_cdit_xl  # 使用已有的模型 checkpoint
+
+results_dir: logs
+train: False
+batch_size: 64
+num_workers: 4  # 降低以避免 soft lockup
+model: CDiT-XL/2
+lr: 8e-5
+
+normalize: True
+grad_clip_val: 10.0
+context_size: 4
+
+distance:
+  min_dist_cat: -64
+  max_dist_cat: 64
+
+len_traj_pred: 64
+
+image_size: 224
+
+# go_stanford 测试集配置
+eval_datasets:
+  go_stanford:
+    data_folder: data/go_stanford          # 软链指向 /DATA/DATANAS2/xiaoyj25/go_stanford
+    test: data_splits/go_stanford/test/
+    goals_per_obs: 4
